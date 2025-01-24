@@ -1,6 +1,6 @@
 package com.milo9922.validator;
 
-import com.milo9922.entity.Student;
+import com.milo9922.dto.StudentDTO;
 import com.milo9922.exception.StudentJsonException;
 import com.milo9922.util.Gender;
 import com.milo9922.util.StudentJsonHandler;
@@ -8,12 +8,12 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class StudentJsonHandlerTest {
+public class StudentDTOJsonHandlerTest {
 
     @Test
     void shouldConvertStudentToJson() throws StudentJsonException {
-        Student student = new Student(
-                1,
+        StudentDTO studentDTO = new StudentDTO(
+                1L,
                 "Jan",
                 "Kowalski",
                 Gender.MALE,
@@ -32,7 +32,7 @@ public class StudentJsonHandlerTest {
         correctJson.append("\"peselNumber\":\"920902002551\"");
         correctJson.append("}");
 
-        String result = StudentJsonHandler.mapStudentToJson(student);
+        String result = StudentJsonHandler.mapStudentToJson(studentDTO);
 
         assertEquals(correctJson.toString(), result);
     }

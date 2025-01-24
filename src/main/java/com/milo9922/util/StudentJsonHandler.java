@@ -3,74 +3,57 @@ package com.milo9922.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
-import com.milo9922.entity.Student;
-import com.milo9922.exception.StudentJsonException;
-import lombok.extern.log4j.Log4j2;
-
+import com.milo9922.dto.StudentDTO;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-@Log4j2
-public final class JsonStudentMapper {
-    private static final ObjectMapper mapper = new ObjectMapper();
+
+public final class StudentJsonHandler {
+
     public static final String EMPTY_JSON = "{}";
-    public static final String STUDENT_JSON_PATH = "student.json";
+    public static final String STUDENT_JSON_PATH = System.getProperty("user.dir") + "\\students.json";
+    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final CollectionType studentListCollectionType = mapper.getTypeFactory().constructCollectionType(List.class, StudentDTO.class);
 
-    public static String mapStudentToJson(Student student) throws StudentJsonException {
-        if(student == null) {
-            log.warn("Student is null");
-            return EMPTY_JSON;
-        }
+    public static String mapStudentToJson(StudentDTO studentDTO) {
         try {
-            return mapper.writeValueAsString(student);
+            if(studentDTO != null) {
+                return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(studentDTO);
+            }
         } catch (JsonProcessingException e) {
-            log.error("Could not convert student object to JSON");
-            throw new StudentJsonException(e.getMessage());
+            e.printStackTrace();
         }
+        return EMPTY_JSON;
     }
 
-    public static Student jsonToStudent(String json) throws StudentJsonException {
-        if(json.equals(EMPTY_JSON) || json.isEmpty()) {
-            log.warn("Student json is empty");
-        }
+    public static List<StudentDTO> getStudentsFromJsonFile(String pathToJson) {
         try {
-            return mapper.readValue(json, Student.class);
-        } catch (JsonProcessingException e) {
-            log.error("Could not convert json to Student");
-            throw new StudentJsonException(e.getMessage());
-        }
-    }
-
-    public static void studentToJsonFile(Student student) throws StudentJsonException {
-        if(student == null) {
-            log.warn("Student is null");
-            throw new StudentJsonException("Could not convert student object to JSON file");
-        }
-        try {
-            mapper.writeValue(new File(STUDENT_JSON_PATH), student);
-        } catch (IOException e) {
-            log.error("Could not convert student object to JSON file");
-            throw new StudentJsonException(e.getMessage());
-        }
-    }
-
-    public static List<Student> getStudentsFromJsonFile(String pathToJson) {
-        InputStream inputStream = Student.class.getClassLoader().getResourceAsStream(pathToJson);
-        CollectionType collectionType = mapper.getTypeFactory().constructCollectionType(List.class, Student.class);
-        try {
-            List<Student> students = mapper.readValue(inputStream, collectionType);
-            if(students.isEmpty()) {
+            File jsonFile = new File(pathToJson);
+            if(!jsonFile.exists()) {
                 return new ArrayList<>();
-            } else {
-                return students;
+            }
+            List<StudentDTO> studentDTOS = mapper.readValue(jsonFile, studentListCollectionType);
+            if(!studentDTOS.isEmpty()) {
+                return studentDTOS;
             }
         } catch (IOException e) {
-            log.error("Could not convert json to Student list");
-            throw new RuntimeException(e);
+            System.out.println("Błąd podczas odczytu pliku: " + pathToJson);
+            e.printStackTrace();
         }
+        return new ArrayList<>();
     }
 
+    public static String getStudentJsonFromStudentList(List<StudentDTO> studentsList) throws JsonProcessingException {
+        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(studentsList);
+    }
+
+    public static void saveStudentListToDefaultJsonFile(List<StudentDTO> students) throws IOException {
+        mapper.writerWithDefaultPrettyPrinter().writeValue(new File(STUDENT_JSON_PATH), students);
+    }
+
+    public static void saveStudentListToJsonFile(List<StudentDTO> students, String path) throws IOException {
+        mapper.writerWithDefaultPrettyPrinter().writeValue(new File(path), students);
+    }
 }
